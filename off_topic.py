@@ -22,6 +22,19 @@ NGMI_STRINGS = [
 
 NGMI_EXPR = re.compile(r'\b(?:{0})\b'.format('|'.join(NGMI_STRINGS)))
 
+DEROGATORY_WORDS_STRINGS = [
+    'bad',
+    'mid',
+    'shit',
+    'overrated',
+    "terrible",
+    "okay",
+    "meh",
+    "awful",
+    "crap",
+]
+DEROGATORY_EXPR = re.compile(r'\b(?:{0})\b'.format('|'.join(DEROGATORY_WORDS_STRINGS)))
+
 CHAIN_MESSAGES = [
     'https://cdn.discordapp.com/attachments/391359642539917322/838840833192099840/pass_the_needle.gif',
     'https://cdn.discordapp.com/attachments/391359642539917322/895405101949263952/1564621864696.gif'
@@ -43,6 +56,8 @@ TROLLFACES = [
     ('https://cdn.discordapp.com/attachments/391359642539917322/896378197199958026/c05d2293fbe9111604301b9a334e3010'
      '.webm', 10),
 ]
+
+LIN_PHOTO = ("FILE LOCATION", "SIZE")
 
 GIGACHADS = [
     ('https://cdn.discordapp.com/attachments/365525225514729472/895722334445514782/video0_-_2021-08-20T200012.055.mp4',
@@ -91,6 +106,10 @@ class OffTopicCog(commands.Cog):
             elif 'gigachad' in message.content.lower():
                 ctx = await self.bot.get_context(message)
                 await ctx.reply(random.choices(*zip(*GIGACHADS))[0])
+            #for the hamilton haters
+            elif (("hamilton" in message.content.lower()) or ("lin manuel miranda" in message.content.lower())) and (re.search(DEROGATORY_EXPR, message.content)):
+                ctx = await self.bot.get_context(message)
+                await ctx.reply(LIN_PHOTO) 
 
             if message.channel.id == bot_data.CHANNEL_IDS['off-topic']:
                 if message.content in CHAIN_MESSAGES and not message.author.bot:
