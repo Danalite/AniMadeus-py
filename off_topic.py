@@ -21,10 +21,6 @@ NGMI_STRINGS = [
 
 NGMI_EXPR = re.compile(r'\b(?:{0})\b'.format('|'.join(NGMI_STRINGS)), re.IGNORECASE)
 
-FFXIV_SHILL = 'Have you considered playing the critically acclaimed MMORPG Final Fantasy XIV? With an expanded free trial you can play through the entirety of A Realm Reborn and the award winning Heavensward expansion up to level 60 for free with no restrictions on playtime.'
-
-FFXIV_COUNTER = 0
-
 CHAIN_MESSAGES = [
     'https://cdn.discordapp.com/attachments/391359642539917322/838840833192099840/pass_the_needle.gif',
     'https://cdn.discordapp.com/attachments/391359642539917322/895405101949263952/1564621864696.gif'
@@ -63,6 +59,10 @@ GIGACHADS = [
     ('https://cdn.discordapp.com/attachments/815312935060242507/896383330881257472/unknown.png', 10)
 ]
 
+FFXIV_SHILL = ('Have you considered playing the critically acclaimed MMORPG Final Fantasy XIV? With an expanded free'
+               ' trial you can play through the entirety of A Realm Reborn and the award winning Heavensward expansion'
+               ' up to level 60 for free with no restrictions on playtime.')
+
 FFXIV_STRINGS = [
     'ff14',
     'ffxiv',
@@ -93,14 +93,15 @@ DEROGATORY_WORD_STRINGS = [
 DEROGATORY_EXPR = re.compile(r'\b(?:{0})\b'.format('|'.join(DEROGATORY_WORD_STRINGS)), re.IGNORECASE)
 
 LIN_FILE = 'https://i.imgur.com/D217yoj.jpg'
-kazuCry = 'https://imgur.com/a/qwv8tkx'
-pointing = 'https://imgur.com/a/qm6OakX'
 
 
 # Cog containing specific commands/features for the #off-topic channel.
 class OffTopicCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        self.ffxiv_cooldown = 100  # Number of messages before a reply.
+        self.ffxiv_counter = 0  # Current message count.
 
     # Event listener for off-topic messages.
     #
@@ -125,7 +126,8 @@ class OffTopicCog(commands.Cog):
             # Hamilton Meme reply
             #
             # Author: Maybe
-            elif (("hamilton" in message.content.lower()) or ("lin manuel miranda" in message.content.lower())) and (re.search(DEROGATORY_EXPR, message.content)):
+            elif (("hamilton" in message.content.lower() or "lin manuel miranda" in message.content.lower())
+                  and re.search(DEROGATORY_EXPR, message.content)):
                 ctx = await self.bot.get_context(message)
                 await ctx.reply(LIN_FILE)
 
@@ -142,21 +144,23 @@ class OffTopicCog(commands.Cog):
             if ':tf:' in message.content.lower() or \
                     ('we do' in message.content.lower() and 'troll' in message.content.lower()):
                 await message.channel.send(random.choices(*zip(*TROLLFACES))[0])
+
         elif not message.author.bot:
+            # Akechi react
+            #
+            # Author: Mabey
             if 'akechi' in message.content.lower():
-                ctx = await self.bot.get_context(message)
-                await ctx.reply(pointing)
-                
-            if re.search(FFXIV_EXPR, message.content):        
-                if FFXIV_COUNTER == 0:
+                await message.add_reaction('☝️')
+
+            # FFXIV shill message.
+            #
+            # Author: Mabey
+            if re.search(FFXIV_EXPR, message.content):
+                if self.ffxiv_counter == 0:
                     ctx = await self.bot.get_context(message)
                     await ctx.reply(FFXIV_SHILL)
-                    
-                FFXIV_COUNTER += 1
-                if FFXIV_COUTNER >= 10:
-                    FFXIV_COUNTER = 0
-                
-            
+
+                self.ffxiv_counter = (self.ffxiv_counter + 1) % self.ffxiv_cooldown
 
     # Bravo Nolan command.
     #
