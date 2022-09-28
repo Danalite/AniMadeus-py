@@ -57,7 +57,7 @@ class OffTopicCog(commands.Cog):
             # Hamilton Meme reply
             #
             # Author: Maybe
-            elif (("hamilton" in message.content.lower() or "lin manuel miranda" in message.content.lower())
+            if (("hamilton" in message.content.lower() or "lin manuel miranda" in message.content.lower())
                   and re.search(DEROGATORY_EXPR, message.content)):
                 ctx = await self.bot.get_context(message)
                 await ctx.reply(LIN_FILE)
