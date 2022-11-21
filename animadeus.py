@@ -1,13 +1,14 @@
 # AniMadeus main file
-import bot_data
-import config
-from off_topic import OffTopicCog
-
+import subprocess
+import random
 
 import discord
 from discord.ext import commands
 import mysql.connector
-import subprocess
+
+import bot_data
+import config
+from off_topic import OffTopicCog
 
 
 # Intents
@@ -302,6 +303,16 @@ async def library(ctx):
                       ' ~~and probably wont be for a very long time~~.')
     return await ctx.message.channel.send(message_string.format(
         ctx.message.author.mention))
+
+
+# Coin Flip command.
+#
+# Returns either heads or tails.
+@bot.command(pass_context=True)
+async def coinflip(ctx):
+    outcome = random.choice(['Heads', 'Tails'])
+    return await ctx.message.channel.send('{0} - {1}'.format(
+        ctx.message.author.mention, outcome))
 
 
 if __name__ == '__main__':
