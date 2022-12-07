@@ -3,6 +3,8 @@
 # Mainly contains ids from the discord server. Leaving this out of the config file so it can be edited
 # by non-webmasters.
 
+DATABASE_PATH = 'data/db.sqlite3'
+
 GUILD_ID = 221309541088886784
 
 MESSAGE_IDS = {
@@ -16,7 +18,8 @@ CHANNEL_IDS = {
     'rules': 385333508463263746,
     'role-assign': 546843849620979723,
     'welcome-and-links': 326044428621840386,
-    'off-topic': 391359642539917322
+    'off-topic': 391359642539917322,
+    'karaoke-discussion': 413698021084233738
 }
 
 ROLE_IDS = {
@@ -28,6 +31,7 @@ ROLE_IDS = {
     'graduate': 729027220139409469,
     'gacha_addict': 790246791320436796,
     'webmaster': 335157257346220033,
+    'av': 682339378789744647,
     'member': 472915800081170452,
     'exec': 221311015432749056,
 }

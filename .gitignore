@@ -16,3 +16,6 @@ pid.txt
 # Virtual Env
 venv/
 .venv/
+
+# Database file
+data/db.sqlite3

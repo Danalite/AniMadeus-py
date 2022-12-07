@@ -1,10 +1,13 @@
 # AniMadeus main file
 import subprocess
 import random
+import sqlite3
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 import mysql.connector
+import requests
 
 import bot_data
 import config
@@ -40,6 +43,13 @@ def bot_commands_channel_check(ctx):
 # Checks if a command was run in the web-development channel.
 def web_development_channel_check(ctx):
     return ctx.message.channel.id == bot_data.CHANNEL_IDS['web-development']
+
+
+# Karaoke-discussion check.
+#
+# Checks if a command was run in the karaoke-discussion channel.
+def karaoke_discussion_channel_check(ctx):
+    return ctx.message.channel.id == bot_data.CHANNEL_IDS['karaoke-discussion']
 
 
 # Event listener for member joins.
@@ -225,7 +235,7 @@ async def on_website_create_users_error(ctx, error):
 # Prunes up to 100 messages.
 #
 # Only exec can use this command.
-@bot.command()
+@bot.command(pass_context=True)
 @commands.has_role(bot_data.ROLE_IDS['exec'])
 async def prune(ctx, prune_amount: int):
     if prune_amount > 100:
@@ -257,6 +267,155 @@ async def on_prune_error(ctx, error):
         return await ctx.message.channel.send(
             '{0} - The amount of messages to prune must be a postive integer.'.format(
                 ctx.message.author.mention))
+
+# Submit_karaoke_history command.
+#
+# Takes a karaoke history file (produced by vocaluxe-history https://github.com/Danalite/vocaluxe-history) and stores
+# a record of the songs that were sung at the event. It does not
+#
+# This command uses the subprocesses module to run the command which creates users on the website and sends out the
+# welcome emails.
+#
+# Only the webmaster can use this command and it must be in the web-development channel.
+@bot.command(pass_context=True, aliases=['skh'])
+@commands.has_role(bot_data.ROLE_IDS['av'])
+async def submit_karaoke_history(ctx, date: str, *, event: str):
+    if len(ctx.message.attachments) == 0:
+        return await ctx.message.channel.send(
+            '{0} - You must attach the karaoke history file.'.format(ctx.message.author.mention))
+
+    attachment_url = ctx.message.attachments[0].url
+    file_request = requests.get(attachment_url)
+    history_entries = file_request.text.split('\n')[:-1]
+    for entry in history_entries:
+        try:
+            _, title, artist = entry.strip().split('\t')
+        except (ValueError):
+            continue
+
+        conn = sqlite3.connect(bot_data.DATABASE_PATH)
+        try:
+            conn.execute(
+                ('INSERT INTO KARAOKE_HISTORY VALUES (:title, :artist, :date, :event)'),
+                {'title': title, 'artist': artist, 'date': date, 'event': event}
+            )
+        except (sqlite3.IntegrityError):
+            pass
+        conn.commit()
+        conn.close()
+
+    return await ctx.message.channel.send('{0} - History file processed.'.format(ctx.message.author.mention))
+
+
+# Submit_karaoke_history command error handler.
+@submit_karaoke_history.error
+async def on_submit_karaoke_history_error(ctx, error):
+    if isinstance(error, commands.errors.MissingRole):
+        return await ctx.message.channel.send(
+            '{0} - Only the AV can use this command.'.format(
+                ctx.message.author.mention))
+    elif isinstance(error, commands.errors.MissingRequiredArgument):
+        return await ctx.message.channel.send(
+            ('{0} - You are using this command incorrectly. The correct usage is'
+             ' `!submit_karaoke_history <eventDate> <eventName>`. <eventDate> must be "YYMMDD".'
+             ' You must also attach the history file.').format(
+                ctx.message.author.mention))
+    else:
+        await ctx.message.channel.send(
+            '{0} - There was an error processing this command.'.format(ctx.message.author.mention))
+        webmaster = ctx.message.guild.get_role(bot_data.ROLE_IDS['webmaster'])
+        web_development_channel = bot.get_guild(bot_data.GUILD_ID).get_channel(bot_data.CHANNEL_IDS['web-development'])
+        return await web_development_channel.send(
+            ('{0} - There was an error with the karaoke history command.\n'
+             '```{1}```').format(webmaster.mention, error))
+
+
+# Lastsang command.
+#
+# Returns the last time a given song was sung at Karaoke.
+@bot.command(pass_context=True)
+# @commands.check(karaoke_discussion_channel_check)
+async def lastsang(ctx, *, title: str):
+    conn = sqlite3.connect(bot_data.DATABASE_PATH)
+    cur = conn.execute('SELECT title, artist, eventName, MAX(eventDate) FROM KARAOKE_HISTORY WHERE title LIKE ? GROUP BY title, artist LIMIT 5;', ('%' + title + '%',))
+    rows = cur.fetchall()
+    if not rows:
+        return await ctx.message.channel.send(
+            '{0} - No record for that song was found'.format(ctx.message.author.mention))
+
+    songs = []
+    for row in rows:
+        song_title, artist, event_name, event_date = row
+        event_datetime = datetime.strptime(event_date, '%y%m%d')
+        song_data = (song_title, artist, event_name, datetime.strftime(event_datetime, '%d/%m/%y'))
+        songs.append(song_data)
+
+    response = '{0} - ' if len(songs) == 1 else '{0}:\n'
+    response = response.format(ctx.message.author.mention)
+
+    for song in songs:
+        response += '*{0}* by *{1}* was last sung at **{2}** ({3})\n'.format(*song)
+
+    return await ctx.message.channel.send(response)
+
+
+# lastsang command error handler.
+@lastsang.error
+async def on_lastsang_error(ctx, error):
+    if isinstance(error, commands.errors.CheckFailure):
+        pass
+    else:
+        await ctx.message.channel.send(
+            '{0} - There was an error processing this command.'.format(ctx.message.author.mention))
+        webmaster = ctx.message.guild.get_role(bot_data.ROLE_IDS['webmaster'])
+        web_development_channel = bot.get_guild(bot_data.GUILD_ID).get_channel(bot_data.CHANNEL_IDS['web-development'])
+        return await web_development_channel.send(
+            ('{0} - There was an error with the lastsang command.\n'
+             '```{1}```').format(webmaster.mention, error))
+
+
+# sang command.
+#
+# Returns all the times a given song was sung at Karaoke.
+@bot.command(pass_context=True)
+# @commands.check(karaoke_discussion_channel_check)
+async def sang(ctx, *, title: str):
+    conn = sqlite3.connect(bot_data.DATABASE_PATH)
+    cur = conn.execute('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ? LIMIT 15;', ('%' + title + '%',))
+    rows = cur.fetchall()
+    if not rows:
+        return await ctx.message.channel.send(
+            '{0} - No record for that song was found'.format(ctx.message.author.mention))
+
+    songs = []
+    for row in rows:
+        song_title, artist, event_date, event_name = row
+        event_datetime = datetime.strptime(event_date, '%y%m%d')
+        song_data = (song_title, artist, event_name, datetime.strftime(event_datetime, '%d/%m/%y'))
+        songs.append(song_data)
+
+    response = '{0} - ' if len(songs) == 1 else '{0}:\n'
+    response = response.format(ctx.message.author.mention)
+
+    for song in songs:
+        response += '*{0}* by *{1}* was sung at **{2}** ({3})\n'.format(*song)
+
+    return await ctx.message.channel.send(response)
+
+
+# lastsang command error handler.
+@sang.error
+async def on_sang_error(ctx, error):
+    if isinstance(error, commands.errors.CheckFailure):
+        pass
+    else:
+        await ctx.message.channel.send(
+            '{0} - There was an error processing this command.'.format(ctx.message.author.mention))
+        webmaster = ctx.message.guild.get_role(bot_data.ROLE_IDS['webmaster'])
+        web_development_channel = bot.get_guild(bot_data.GUILD_ID).get_channel(bot_data.CHANNEL_IDS['web-development'])
+        return await web_development_channel.send(
+            ('{0} - There was an error with the sang command.\n'
+             '```{1}```').format(webmaster.mention, error))
 
 
 # Events command.
