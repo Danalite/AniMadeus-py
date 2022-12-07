@@ -268,15 +268,13 @@ async def on_prune_error(ctx, error):
             '{0} - The amount of messages to prune must be a postive integer.'.format(
                 ctx.message.author.mention))
 
+
 # Submit_karaoke_history command.
 #
 # Takes a karaoke history file (produced by vocaluxe-history https://github.com/Danalite/vocaluxe-history) and stores
 # a record of the songs that were sung at the event. It does not
 #
-# This command uses the subprocesses module to run the command which creates users on the website and sends out the
-# welcome emails.
-#
-# Only the webmaster can use this command and it must be in the web-development channel.
+# Only the av can use this command.
 @bot.command(pass_context=True, aliases=['skh'])
 @commands.has_role(bot_data.ROLE_IDS['av'])
 async def submit_karaoke_history(ctx, date: str, *, event: str):
@@ -334,10 +332,14 @@ async def on_submit_karaoke_history_error(ctx, error):
 #
 # Returns the last time a given song was sung at Karaoke.
 @bot.command(pass_context=True)
-# @commands.check(karaoke_discussion_channel_check)
+@commands.check(karaoke_discussion_channel_check)
 async def lastsang(ctx, *, title: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
-    cur = conn.execute('SELECT title, artist, eventName, MAX(eventDate) FROM KARAOKE_HISTORY WHERE title LIKE ? GROUP BY title, artist LIMIT 5;', ('%' + title + '%',))
+    cur = conn.execute(
+        ('SELECT title, artist, eventName, MAX(eventDate) FROM KARAOKE_HISTORY WHERE title LIKE ?'
+         ' GROUP BY title, artist LIMIT 5;'),
+        (title + '%',)
+    )
     rows = cur.fetchall()
     if not rows:
         return await ctx.message.channel.send(
@@ -378,10 +380,10 @@ async def on_lastsang_error(ctx, error):
 #
 # Returns all the times a given song was sung at Karaoke.
 @bot.command(pass_context=True)
-# @commands.check(karaoke_discussion_channel_check)
+@commands.check(karaoke_discussion_channel_check)
 async def sang(ctx, *, title: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
-    cur = conn.execute('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ? LIMIT 15;', ('%' + title + '%',))
+    cur = conn.execute('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ? LIMIT 15;', (title + '%',))
     rows = cur.fetchall()
     if not rows:
         return await ctx.message.channel.send(
