@@ -52,6 +52,13 @@ def karaoke_discussion_channel_check(ctx):
     return ctx.message.channel.id == bot_data.CHANNEL_IDS['karaoke-discussion']
 
 
+# DM check.
+#
+# Checks if a command was run in DMs with the bot.
+def dm_channel_check(ctx):
+    return isinstance(ctx.message.channel, discord.DMChannel)
+
+
 # Event listener for member joins.
 #
 # Used to welcome new users.
@@ -132,7 +139,7 @@ async def on_raw_reaction_remove(payload):
 #
 # For this command to work the bot must be running on the same machine as the website's database.
 @bot.command(pass_context=True)
-@commands.check(bot_commands_channel_check)
+@commands.check(dm_channel_check)
 async def member(ctx, member_id: int):
     if len(str(member_id)) != 7:
         return await ctx.message.channel.send('{0} - Your university id should be 7 digits long.'.format(
@@ -193,7 +200,8 @@ async def on_member_error(ctx, error):
         return await ctx.message.channel.send('{0} - Your university id should be a 7 digit integer.'.format(
             ctx.message.author.mention))
     elif isinstance(error, commands.errors.CheckFailure):
-        pass
+        return await ctx.message.channel.send('{0} - This command is now run in DMs with the Bot.'.format(
+            ctx.message.author.mention))
 
 
 # Create_website_user command.
@@ -332,7 +340,7 @@ async def on_submit_karaoke_history_error(ctx, error):
 #
 # Returns the last time a given song was sung at Karaoke.
 @bot.command(pass_context=True)
-@commands.check(karaoke_discussion_channel_check)
+@commands.check(bot_commands_channel_check)
 async def lastsang(ctx, *, title: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
     cur = conn.execute(
@@ -380,7 +388,7 @@ async def on_lastsang_error(ctx, error):
 #
 # Returns all the times a given song was sung at Karaoke.
 @bot.command(pass_context=True)
-@commands.check(karaoke_discussion_channel_check)
+@commands.check(bot_commands_channel_check)
 async def sang(ctx, *, title: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
     cur = conn.execute('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ? LIMIT 15;', (title + '%',))
@@ -427,6 +435,7 @@ async def on_sang_error(ctx, error):
 # This command was implemented in the old Animadeus bot, however no one ever really used it so this is a very low
 # priority feature.
 @bot.command(pass_context=True)
+@commands.check(bot_commands_channel_check)
 async def events(ctx):
     message_string = ('{0} - This command is not currently implemented'
                       ' ~~and probably wont be for a very long time~~.')
@@ -441,6 +450,7 @@ async def events(ctx):
 # This command was implemented in the old Animadeus bot, however no one ever really used it so this is a very low
 # priority feature.
 @bot.command(pass_context=True)
+@commands.check(bot_commands_channel_check)
 async def library(ctx):
     message_string = ('{0} - This command is not currently implemented'
                       ' ~~and probably wont be for a very long time~~.')

@@ -12,7 +12,7 @@ MESSAGE_IDS = {
 }
 
 CHANNEL_IDS = {
-    'bot-commands': 222363798391095296,
+    'bot-commands': 1050233139458478100,
     'web-development': 335158754616016906,
     'newcomers': 753668259974217870,
     'rules': 385333508463263746,
