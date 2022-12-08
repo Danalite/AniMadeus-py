@@ -179,7 +179,8 @@ async def member(ctx, member_id: int):
 
     if tag_matched:
         member_role = bot.get_guild(bot_data.GUILD_ID).get_role(bot_data.ROLE_IDS['member'])
-        await ctx.message.author.add_roles(member_role)
+        member_server = bot.get_guild(bot_data.GUILD_ID).get_member(ctx.message.author.id)
+        await member_server.add_roles(member_role)
         return await ctx.message.channel.send('{0} - Member role added.'.format(ctx.message.author.mention))
     elif result_found:
         return await ctx.message.channel.send('{0} - The discord tag for this user does not match yours.'.format(
