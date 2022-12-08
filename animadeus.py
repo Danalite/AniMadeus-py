@@ -393,7 +393,8 @@ async def on_lastsang_error(ctx, error):
 @commands.check(bot_commands_channel_check)
 async def sang(ctx, *, title: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
-    cur = conn.execute('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ? LIMIT 15;', (title + '%',))
+    cur = conn.execute(('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ?'
+                        ' ORDER BY title, artist, eventDate DESC LIMIT 15;'), (title + '%',))
     rows = cur.fetchall()
     if not rows:
         return await ctx.message.channel.send(
