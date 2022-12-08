@@ -201,6 +201,7 @@ async def on_member_error(ctx, error):
         return await ctx.message.channel.send('{0} - Your university id should be a 7 digit integer.'.format(
             ctx.message.author.mention))
     elif isinstance(error, commands.errors.CheckFailure):
+        await ctx.message.delete()
         return await ctx.message.channel.send('{0} - This command is now run in DMs with the Bot.'.format(
             ctx.message.author.mention))
 
