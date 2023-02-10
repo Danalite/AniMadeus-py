@@ -431,6 +431,46 @@ async def on_sang_error(ctx, error):
              '```{1}```').format(webmaster.mention, error))
 
 
+# topartists command.
+#
+# Returns the top artists from karaoke.
+@bot.command(pass_context=True)
+@commands.check(bot_commands_channel_check)
+async def topartists(ctx):
+    conn = sqlite3.connect(bot_data.DATABASE_PATH)
+    cur = conn.execute(('SELECT artist, COUNT(*) FROM KARAOKE_HISTORY GROUP BY artist'
+                        ' ORDER BY COUNT(*) DESC LIMIT 10;'))
+    rows = cur.fetchall()
+
+    response = '{0}:\n'
+    response = response.format(ctx.message.author.mention)
+
+    for row in rows:
+        response += 'Songs by *{0}* have been sung **{1}** times.\n'.format(*row)
+
+    return await ctx.message.channel.send(response)
+
+
+# topsongs command.
+#
+# Returns the top songs from karaoke.
+@bot.command(pass_context=True)
+@commands.check(bot_commands_channel_check)
+async def topsongs(ctx):
+    conn = sqlite3.connect(bot_data.DATABASE_PATH)
+    cur = conn.execute(('SELECT title, artist, COUNT(*) FROM KARAOKE_HISTORY GROUP BY title, artist'
+                        ' ORDER BY COUNT(*) DESC LIMIT 10;'))
+    rows = cur.fetchall()
+
+    response = '{0}:\n'
+    response = response.format(ctx.message.author.mention)
+
+    for row in rows:
+        response += '*{0}* by *{1}* has been sung **{2}** times.\n'.format(*row)
+
+    return await ctx.message.channel.send(response)
+
+
 # Events command.
 #
 # Returns a formatted list of upcoming events.
