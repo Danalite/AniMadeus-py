@@ -81,6 +81,15 @@ async def on_member_join(member):
 # Used for the role assign system.
 @bot.listen()
 async def on_raw_reaction_add(payload):
+    # MCM react
+    if payload.message_id == 1111694605046521937:
+        role = bot.get_guild(bot_data.GUILD_ID).get_role(1111692411710734437)
+        try:
+            await payload.member.add_roles(role)
+        except discord.HTTPException:
+            pass
+        return
+
     if payload.message_id != bot_data.MESSAGE_IDS['role_assign_message']:
         return
 
@@ -105,6 +114,14 @@ async def on_raw_reaction_add(payload):
 # Used for the role assign system.
 @bot.listen()
 async def on_raw_reaction_remove(payload):
+    if payload.message_id == 1111694605046521937:
+        role = bot.get_guild(bot_data.GUILD_ID).get_role(1111692411710734437)
+        member = bot.get_guild(bot_data.GUILD_ID).get_member(payload.user_id)
+        try:
+            await member.remove_roles(role)
+        except discord.HTTPException:
+            pass
+       
     if payload.message_id != bot_data.MESSAGE_IDS['role_assign_message']:
         return
 
