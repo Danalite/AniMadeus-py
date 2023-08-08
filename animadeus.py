@@ -173,7 +173,7 @@ async def member(ctx, member_id: int):
     result_found = False
     for (discord_tag,) in cursor:
         result_found = True
-        tag_matched = discord_tag == '{0}#{1}'.format(ctx.message.author.name, ctx.message.author.discriminator)
+        tag_matched = discord_tag == ctx.message.author 
 
     conn.close()
 
