@@ -114,7 +114,7 @@ async def on_raw_reaction_add(payload):
 # Used for the role assign system.
 @bot.listen()
 async def on_raw_reaction_remove(payload):    
-      if payload.message_id == 1180201100142448731:
+    if payload.message_id == 1180201100142448731:
         role = bot.get_guild(bot_data.GUILD_ID).get_role(1180199969169350676)
         member = bot.get_guild(bot_data.GUILD_ID).get_member(payload.user_id)
         try:
