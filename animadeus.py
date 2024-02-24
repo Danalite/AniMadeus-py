@@ -473,10 +473,6 @@ async def topsongs(ctx):
     return await ctx.message.channel.send(response)
 
 
-
-
-
-
 # topby command.
 #
 # Returns the most sung songs by a given artist at Karaoke.
@@ -484,27 +480,26 @@ async def topsongs(ctx):
 @commands.check(bot_commands_channel_check)
 async def topby(ctx, *, artist: str):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
-    cur = conn.execute(('SELECT title, COUNT(*) AS song_count FROM KARAOKE_HISTORY WHERE artist LIKE ?'
-                        ' GROUP BY title HAVING song_count > 1 ORDER BY count DESC LIMIT 15;'), (artist + '%',))
+    cur = conn.execute(('SELECT title, artist, COUNT(*) AS song_count FROM KARAOKE_HISTORY WHERE artist LIKE ?'
+                        ' GROUP BY title HAVING song_count > 0 ORDER BY song_count DESC LIMIT 15;'), (artist + '%',))
     rows = cur.fetchall()
     if not rows:
         return await ctx.message.channel.send(
-            '{0} - No records for this artist was found'.format(ctx.message.author.mention))
+            '{0} - No songs from this artist have been played/No records for this artist was found'.format(ctx.message.author.mention))
 
     totalTimes = 0
     songs = []
     for row in rows:
-        song_title, count = row
-        song_data = (song_title, count)
+        song_title, artist_name, count = row
+        song_data = (song_title, artist_name, count)
         songs.append(song_data)
         totalTimes += count
 
-
     response = '{0}:\n' 
     response = response.format(ctx.message.author.mention)
-    response += f'In total, songs by *{artist}* have been sung {totalTimes} times'
+    response += f'In total, songs by **{rows[0][1]}** have been sung **{totalTimes}** times.\n'
     for song in songs:
-        response += '*{0}* has been sung *{1}* times\n'.format(*song)
+        response += '*{0}* has been sung **{2}** time(s)\n'.format(*song)
 
     return await ctx.message.channel.send(response)
 
@@ -521,10 +516,6 @@ async def on_topby_error(ctx, error):
         return await web_development_channel.send(
             ('{0} - There was an error with the topby command.\n'
              '```{1}```').format(webmaster.mention, error))
-
-
-
-
 
 # Events command.
 #
