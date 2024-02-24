@@ -437,6 +437,7 @@ async def on_sang_error(ctx, error):
 # Returns the top artists from karaoke.
 @bot.command(pass_context=True)
 @commands.check(bot_commands_channel_check)
+@commands.check(web_development_channel_check)
 async def topartists(ctx):
     conn = sqlite3.connect(bot_data.DATABASE_PATH)
     cur = conn.execute(('SELECT artist, COUNT(*) FROM KARAOKE_HISTORY GROUP BY artist'
