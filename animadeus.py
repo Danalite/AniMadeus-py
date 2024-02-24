@@ -396,6 +396,7 @@ async def sang(ctx, *, title: str):
     cur = conn.execute(('SELECT * FROM KARAOKE_HISTORY WHERE title LIKE ?'
                         ' ORDER BY title, artist, eventDate DESC LIMIT 15;'), (title + '%',))
     rows = cur.fetchall()
+    
     if not rows:
         return await ctx.message.channel.send(
             '{0} - No record for that song was found'.format(ctx.message.author.mention))
@@ -416,7 +417,7 @@ async def sang(ctx, *, title: str):
     return await ctx.message.channel.send(response)
 
 
-# lastsang command error handler.
+# sang command error handler.
 @sang.error
 async def on_sang_error(ctx, error):
     if isinstance(error, commands.errors.CheckFailure):
@@ -469,6 +470,59 @@ async def topsongs(ctx):
         response += '*{0}* by *{1}* has been sung **{2}** times.\n'.format(*row)
 
     return await ctx.message.channel.send(response)
+
+
+
+
+
+
+# topby command.
+#
+# Returns the most sung songs by a given artist at Karaoke.
+@bot.command(pass_context=True)
+@commands.check(bot_commands_channel_check)
+async def topby(ctx, *, artist: str):
+    conn = sqlite3.connect(bot_data.DATABASE_PATH)
+    cur = conn.execute(('SELECT title, COUNT(*) AS song_count FROM KARAOKE_HISTORY WHERE artist LIKE ?'
+                        ' GROUP BY title HAVING song_count > 1 ORDER BY count DESC LIMIT 15;'), (artist + '%',))
+    rows = cur.fetchall()
+    if not rows:
+        return await ctx.message.channel.send(
+            '{0} - No records for this artist was found'.format(ctx.message.author.mention))
+
+    totalTimes = 0
+    songs = []
+    for row in rows:
+        song_title, count = row
+        song_data = (song_title, count)
+        songs.append(song_data)
+        totalTimes += count
+
+
+    response = '{0}:\n' 
+    response = response.format(ctx.message.author.mention)
+    response += f'In total, songs by *{artist}* have been sung {totalTimes} times'
+    for song in songs:
+        response += '*{0}* has been sung *{1}* times\n'.format(*song)
+
+    return await ctx.message.channel.send(response)
+
+# topby command error handler.
+@topby.error
+async def on_topby_error(ctx, error):
+    if isinstance(error, commands.errors.CheckFailure):
+        pass
+    else:
+        await ctx.message.channel.send(
+            '{0} - There was an error processing this command.'.format(ctx.message.author.mention))
+        webmaster = ctx.message.guild.get_role(bot_data.ROLE_IDS['webmaster'])
+        web_development_channel = bot.get_guild(bot_data.GUILD_ID).get_channel(bot_data.CHANNEL_IDS['web-development'])
+        return await web_development_channel.send(
+            ('{0} - There was an error with the topby command.\n'
+             '```{1}```').format(webmaster.mention, error))
+
+
+
 
 
 # Events command.
