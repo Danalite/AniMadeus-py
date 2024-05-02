@@ -6,17 +6,17 @@ from discord.ext import commands
 import re
 import random
 
-FFXIV_SHILL = ('Have you considered playing the critically acclaimed MMORPG Final Fantasy XIV? With an expanded free'
-               ' trial you can play through the entirety of A Realm Reborn and the award winning Heavensward expansion'
-               ' up to level 60 for free with no restrictions on playtime.')
+FFXIV_SHILL = ('Have you heard of the critically acclaimed MMORPG Final Fantasy XIV with an expanded free'
+               ' trial which you can play through the entirety of A Realm Reborn and the award winning Heavensward expansion'
+               ' and also award winning Stormblood expansion up to level 70 for free with no restrictions on playtime.')
 
 FFXIV_STRINGS = [
     'ff14',
     'ffxiv',
     'thancred',
     'eorzea',
-    'spookyscary',
-    'omegagamer',
+    'elidibus',
+    'emet',
     'fantasy',
     'noscea'
 ]
